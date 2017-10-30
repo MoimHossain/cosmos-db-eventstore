@@ -1,4 +1,5 @@
-﻿using Ibis.Fst.Shared.Messaging.Events;
+﻿using Ibis.Fst.Shared.Messaging;
+using Ibis.Fst.Shared.Messaging.Events;
 using Ibis.Fst.Shared.Models;
 using Ibis.Fst.Storage.DocumentStore;
 using Ibis.Fst.Storage.DocumentStore.Events;
@@ -17,21 +18,34 @@ namespace Ibis.Fst.Storage
             EventSample();
 
             Console.WriteLine("Hello World!");
-            Console.ReadLine();
+            //Console.ReadLine();
         }
 
         private static void EventSample()
         {
             var projectEventStore = DocumentStoreFactory.CreateAsync<EventStore>
                             (Constatnts.Databases.TenantDatabase("xyztenant"), 
-                            Constatnts.Collections.ProjectEventStore).Result;
+                            Constatnts.Collections.EisenEventStore).Result;
+
+            var projectID = Guid.Parse("{EDDB97B6-9EC1-48F6-8AB9-2AC57CB5F96B}").ToString("N");
 
             projectEventStore.Init().Wait();
 
-            projectEventStore.EmitEvents(new List<SomethingHappened> {
-                new SomethingHappened
+            var schema = new EventStore.StreamSchema {
+                PartitionColumnName = "project",
+                PartitionValue = projectID
+            };
+
+            projectEventStore.EmitEvents(schema, new List <EisenAdded> {
+                new EisenAdded
                 {
+                    project = projectID,
                     EventDescription = "Event1" + DateTime.UtcNow.Ticks.ToString()
+                },
+                new EisenAdded
+                {
+                    project = projectID,
+                    EventDescription = "Event3" + DateTime.UtcNow.Ticks.ToString()
                 }
             }).Wait();
 

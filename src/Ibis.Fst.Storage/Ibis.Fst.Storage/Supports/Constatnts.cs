@@ -15,7 +15,7 @@ namespace Ibis.Fst.Storage.Supports
         public static class Collections
         {
             public static string TenantCollection = "tenants";
-            public static string ProjectEventStore = "projects";
+            public static string EisenEventStore = "eisenevents";
             
         }
     }

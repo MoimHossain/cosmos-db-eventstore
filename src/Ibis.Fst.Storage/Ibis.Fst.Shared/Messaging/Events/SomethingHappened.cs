@@ -1,16 +1,31 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Ibis.Fst.Shared.Messaging.Events
 {
-    public class SomethingHappened : EventBase
+    public class EisenAdded : EventBase
     {
-        public SomethingHappened()
+        public EisenAdded()
         {
 
         }
 
+
+        public string project { get; set; }
+        public string EventDescription { get; set; }
+    }
+
+    public class EisenUpdated : EventBase
+    {
+        public EisenUpdated()
+        {
+
+        }
+
+        [JsonProperty(PropertyName = "project")]
+        public string Project { get; set; }
         public string EventDescription { get; set; }
     }
 }

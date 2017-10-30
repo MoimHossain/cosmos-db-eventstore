@@ -29,6 +29,7 @@ namespace Ibis.Fst.Storage.DocumentStore
             await _documentClient.CreateDatabaseIfNotExistsAsync(_databaseId).ConfigureAwait(false);
             await _documentClient.CreateCollectionIfNotExistsAsync(_databaseId, _collectionId).ConfigureAwait(false);
             
+
             _initialized = true;
             return _initialized;
         }

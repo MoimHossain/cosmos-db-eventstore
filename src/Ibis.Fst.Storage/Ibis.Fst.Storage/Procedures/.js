@@ -1,7 +1,11 @@
-﻿// SAMPLE STORED PROCEDURE
-function emiteventsintx(prefix, eventDocuments) {
-    var tryCreateDoc = function (coll, doc, eventId, onSuccess) {
-        doc.eventId = eventId;
+﻿// Emits events (sharing the same partition ID - appropriate
+// for the event aggragate) into the event store and updates the 
+// stream header. 
+function emiteventsintx(partitionKey, partitionValue, eventDocuments) {
+    var collection = __;
+    var response = getContext().getResponse();
+
+    var tryCreateDoc = function (coll, doc, onSuccess) {        
         var dcAccepted = coll.createDocument(coll.getSelfLink(), doc,
             function (error, doc) {
                 onSuccess(!error);
@@ -12,40 +16,62 @@ function emiteventsintx(prefix, eventDocuments) {
         }
     }
 
-    var collection = __;
-    var streamHeadDocID = 'event-stream-head';
-    var q = 'SELECT * FROM Projects p where p.id = "' + streamHeadDocID + '"';
+    var ensureStreamHeader = function (resDocuments, onEnsure) {
+        if (resDocuments != null && resDocuments.length === 1) {
+            onEnsure(resDocuments[0]);
+        } else {
+            var sh = JSON.parse(' { "' + partitionKey + '": "' + partitionValue + '", "eventCount" : 0, "isStreamHead" : true  } ');
+            var shDocAccepted = collection.createDocument(collection.getSelfLink(), sh,
+                function (error, ndoc) {
+                    if (error) { throw "Unable to create stream head!"; }
+                    else { onEnsure(ndoc); }
+                });
+
+            if (!shDocAccepted) {
+                throw "Unable to submit create stread head request!";
+            }
+        }
+    }
+
+
+    var q = 'SELECT * FROM Projects p where p.'
+        + partitionKey + ' = "'
+        + partitionValue + '"';
+
     var accepted = collection.queryDocuments(collection.getSelfLink(), q, {},
         function (error, documents, responseOptions) {
-            if (documents.length != 1) throw "Unable to find stream head!";
-            var streamHeadDoc = documents[0];
-            for (var count = 0; count < documents.length; ++count) {
-                streamHeadDoc.eventCount = streamHeadDoc.eventCount + 1;
-                documents[count].eventId = streamHeadDoc.eventCount;
-            }
+            ensureStreamHeader(documents, function (streamHeadDoc) {
+                var sequence = streamHeadDoc.eventCount;
+                streamHeadDoc.eventCount = streamHeadDoc.eventCount + eventDocuments.length;
 
-            var shAccept =
-                collection.replaceDocument(streamHeadDoc._self, streamHeadDoc,
-                    function (shError, replacedHeaderDoc) {
-                        if (shError) throw "Unable to update stream header!";
+                for (var count = 0; count < eventDocuments.length; ++count) {
+                    eventDocuments[count].eventSequence = (++sequence);
+                }
+                var shAccept =
+                    collection.replaceDocument(streamHeadDoc._self, streamHeadDoc,
+                        function (shError, replacedHeaderDoc) {
+                            if (shError) throw "Unable to update stream header!";
 
-                        var docIterator = 0;
-                        var onAfterAdded = function (success) {
-                            if (!success) {
-                                throw "Unable to update document (" + docIterator + ")!";
-                            } else {
-                                docIterator = docIterator + 1;
-                                if (docIterator < eventDocuments.length) {
-                                    tryCreateDoc(collection, eventDocuments[docIterator], streamHeadDoc.eventCount + docIterator, onAfterAdded);
+                            var docIterator = 0;
+                            var onAfterAdded = function (success) {
+                                if (!success) {
+                                    throw "Unable to update document (" + docIterator + ")!";
+                                } else {
+                                    docIterator = docIterator + 1;
+                                    if (docIterator < eventDocuments.length) {
+                                        tryCreateDoc(collection, eventDocuments[docIterator], onAfterAdded);
+                                    } else {
+                                        response.setBody(true);
+                                    }
                                 }
                             }
-                        }
-                        tryCreateDoc(collection, eventDocuments[docIterator], streamHeadDoc.eventCount + docIterator, onAfterAdded);
+                            tryCreateDoc(collection, eventDocuments[docIterator], onAfterAdded);
 
-                    });
-            if (!shAccept) {
-                throw "Unable to update stream header!"
-            }
+                        });
+                if (!shAccept) {
+                    throw "Unable to update stream header!"
+                }
+            });
         });
 
     if (!accepted) throw new Error('The query was not accepted by the server.');

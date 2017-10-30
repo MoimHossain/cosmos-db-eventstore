@@ -1,4 +1,6 @@
-﻿using Ibis.Fst.Shared.Messaging.Events;
+﻿using Ibis.Fst.Shared.Messaging;
+using Ibis.Fst.Shared.Messaging.Events;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using System;
 using System.Collections.Generic;
@@ -9,20 +11,29 @@ namespace Ibis.Fst.Storage.DocumentStore.Events
 {
     public class EventStore : DocumentStoreBase
     {
+        public class StreamSchema
+        {
+            public string PartitionColumnName { get; set; }
+            public string PartitionValue { get; set; }
+        }
+
         public EventStore(string databaseId, string collectionId) 
             : base(databaseId, collectionId)
         {
 
         }
 
-        public async Task<bool> EmitEvents(List<SomethingHappened> events)
+        public async Task<bool> EmitEvents(StreamSchema schema, List<EisenAdded> events)
         {
             var spLink = UriFactory.CreateStoredProcedureUri(Database, Collection, "transaction-aware-event-emitter-proc");
             try
             {
-                var response = await Client.ExecuteStoredProcedureAsync<SomethingHappened>(spLink, "prefix", events);
+                var response = await Client.ExecuteStoredProcedureAsync<bool>
+                    (spLink,
+                    new RequestOptions { PartitionKey = new PartitionKey(schema.PartitionValue) },
+                    schema.PartitionColumnName, schema.PartitionValue, events);
 
-                return response.StatusCode == System.Net.HttpStatusCode.Accepted;
+                return response.Response && response.StatusCode == System.Net.HttpStatusCode.OK;
             }
             catch(Exception ex)
             {
