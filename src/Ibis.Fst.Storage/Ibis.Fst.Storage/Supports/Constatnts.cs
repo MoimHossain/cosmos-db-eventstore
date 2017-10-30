@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ibis.Fst.Storage.Supports
 {
-    public static class Constatnts
+    public static class Constants
     {
         public static class Databases
         {
@@ -15,8 +15,13 @@ namespace Ibis.Fst.Storage.Supports
         public static class Collections
         {
             public static string TenantCollection = "tenants";
-            public static string EisenEventStore = "eisenevents";
-            
+
+            public static string EisenEventStore = "projects";
+        }
+
+        public static class StoredProcedures
+        {
+            public static string EmitEventsWithTransaction = "transaction-aware-event-emitter-proc";
         }
     }
 }

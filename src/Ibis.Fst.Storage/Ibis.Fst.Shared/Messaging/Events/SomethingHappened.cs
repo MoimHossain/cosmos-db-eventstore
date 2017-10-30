@@ -11,9 +11,7 @@ namespace Ibis.Fst.Shared.Messaging.Events
         {
 
         }
-
-
-        public string project { get; set; }
+        
         public string EventDescription { get; set; }
     }
 

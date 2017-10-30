@@ -24,27 +24,26 @@ namespace Ibis.Fst.Storage
         private static void EventSample()
         {
             var projectEventStore = DocumentStoreFactory.CreateAsync<EventStore>
-                            (Constatnts.Databases.TenantDatabase("xyztenant"), 
-                            Constatnts.Collections.EisenEventStore).Result;
+                            (Constants.Databases.TenantDatabase("xyztenant"), 
+                            Constants.Collections.EisenEventStore).Result;
 
-            var projectID = Guid.Parse("{EDDB97B6-9EC1-48F6-8AB9-2AC57CB5F96B}").ToString("N");
+            
 
             projectEventStore.Init().Wait();
 
             var schema = new EventStore.StreamSchema {
-                PartitionColumnName = "project",
-                PartitionValue = projectID
+                PartitionColumnName = "id",
+                PartitionValue = "aggregate-head-1"
             };
 
             projectEventStore.EmitEvents(schema, new List <EisenAdded> {
                 new EisenAdded
                 {
-                    project = projectID,
                     EventDescription = "Event1" + DateTime.UtcNow.Ticks.ToString()
                 },
                 new EisenAdded
                 {
-                    project = projectID,
+                 
                     EventDescription = "Event3" + DateTime.UtcNow.Ticks.ToString()
                 }
             }).Wait();
@@ -54,7 +53,7 @@ namespace Ibis.Fst.Storage
         private static void Sample1()
         {
             var tenantStore = DocumentStoreFactory.CreateAsync<TenantStore>
-                            (Constatnts.Databases.TenantDatastore, Constatnts.Collections.TenantCollection).Result;
+                            (Constants.Databases.TenantDatastore, Constants.Collections.TenantCollection).Result;
 
             var payload = new Tenant
             {
