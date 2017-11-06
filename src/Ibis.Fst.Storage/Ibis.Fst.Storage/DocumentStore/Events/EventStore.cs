@@ -14,6 +14,7 @@ namespace Ibis.Fst.Storage.DocumentStore.Events
     {
         public class StreamSchema
         {
+            public string StreamHeadDocID { get; set; }
             public string PartitionColumnName { get; set; }
             public string PartitionValue { get; set; }
         }
@@ -28,19 +29,11 @@ namespace Ibis.Fst.Storage.DocumentStore.Events
         {
             var spLink = UriFactory.CreateStoredProcedureUri(Database, Collection, 
                 Constants.StoredProcedures.EmitEventsWithTransaction);
-            try
-            {
-                var response = await Client.ExecuteStoredProcedureAsync<bool>
-                    (spLink,                    
-                    schema.PartitionColumnName, schema.PartitionValue, events);
+            var response = await Client.ExecuteStoredProcedureAsync<bool>
+                    (spLink, new RequestOptions { PartitionKey = new PartitionKey(schema.PartitionValue) },
+                    schema.StreamHeadDocID, schema.PartitionColumnName, schema.PartitionValue, events);
 
-                return response.Response && response.StatusCode == System.Net.HttpStatusCode.OK;
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return false;
-            }
+            return response.Response && response.StatusCode == System.Net.HttpStatusCode.OK;
         }
     }
 }

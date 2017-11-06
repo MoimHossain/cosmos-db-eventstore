@@ -1,7 +1,7 @@
 ﻿// Emits events (sharing the same partition ID - appropriate
 // for the event aggragate) into the event store and updates the 
 // stream header. 
-function emiteventsintx(partitionKey, partitionValue, eventDocuments) {
+function emiteventsintx(streamHeadDocID, partitionKey, partitionValue, eventDocuments) {
     var collection = __;
     var response = getContext().getResponse();
 
@@ -20,7 +20,7 @@ function emiteventsintx(partitionKey, partitionValue, eventDocuments) {
         if (resDocuments != null && resDocuments.length === 1) {
             onEnsure(resDocuments[0]);
         } else {
-            var sh = JSON.parse(' { "' + partitionKey + '": "' + partitionValue + '", "eventCount" : 0, "isStreamHead" : true  } ');
+            var sh = JSON.parse(' { "id": "' + streamHeadDocID + '", "' + partitionKey + '": "' + partitionValue + '", "eventCount" : 0, "isStreamHead" : true  } ');
             var shDocAccepted = collection.createDocument(collection.getSelfLink(), sh,
                 function (error, ndoc) {
                     if (error) { throw "Unable to create stream head!"; }
@@ -34,9 +34,7 @@ function emiteventsintx(partitionKey, partitionValue, eventDocuments) {
     }
 
 
-    var q = 'SELECT * FROM Projects p where p.'
-        + partitionKey + ' = "'
-        + partitionValue + '"';
+    var q = 'SELECT * FROM Projects p where p.id = "' + streamHeadDocID + '"';
 
     var accepted = collection.queryDocuments(collection.getSelfLink(), q, {},
         function (error, documents, responseOptions) {

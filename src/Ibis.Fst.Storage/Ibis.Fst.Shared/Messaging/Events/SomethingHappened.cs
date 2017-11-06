@@ -11,7 +11,12 @@ namespace Ibis.Fst.Shared.Messaging.Events
         {
 
         }
-        
+
+        [JsonProperty(PropertyName = "city")]
+        public string City { get; set; }
+
+        [JsonProperty(PropertyName = "project")]
+        public string Project { get; set; }
         public string EventDescription { get; set; }
     }
 
@@ -21,6 +26,9 @@ namespace Ibis.Fst.Shared.Messaging.Events
         {
 
         }
+
+        [JsonProperty(PropertyName = "city")]
+        public string City { get; set; }
 
         [JsonProperty(PropertyName = "project")]
         public string Project { get; set; }

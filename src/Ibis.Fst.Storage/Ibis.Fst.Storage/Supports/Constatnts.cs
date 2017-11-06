@@ -8,15 +8,15 @@ namespace Ibis.Fst.Storage.Supports
     {
         public static class Databases
         {
-            public static string TenantDatastore = "tenant-catalog";
-            public static Func<string, string> TenantDatabase = (tenantId) => string.Format("{0}-db", tenantId);
+            public static string TenantCatalogDb = "tenant-catalog";
+            public static Func<string, string> TenantDb = (tenantId) => string.Format("{0}-db", tenantId);
         }
 
         public static class Collections
         {
-            public static string TenantCollection = "tenants";
+            public static string TenantCatalog= "tenants";
 
-            public static string EisenEventStore = "projects";
+            public static string ProjectEventStore = "gevents";
         }
 
         public static class StoredProcedures

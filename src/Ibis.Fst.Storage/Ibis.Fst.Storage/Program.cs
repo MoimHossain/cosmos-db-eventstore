@@ -15,7 +15,14 @@ namespace Ibis.Fst.Storage
         {
             //Sample1();
 
-            EventSample();
+            try
+            {
+                EventSample();
+            }
+            catch(Exception anyError)
+            {
+                Console.WriteLine(anyError.Message);
+            }
 
             Console.WriteLine("Hello World!");
             //Console.ReadLine();
@@ -24,26 +31,28 @@ namespace Ibis.Fst.Storage
         private static void EventSample()
         {
             var projectEventStore = DocumentStoreFactory.CreateAsync<EventStore>
-                            (Constants.Databases.TenantDatabase("xyztenant"), 
-                            Constants.Collections.EisenEventStore).Result;
+                            (Constants.Databases.TenantDb("xyztenant"), 
+                            Constants.Collections.ProjectEventStore).Result;
 
             
 
             projectEventStore.Init().Wait();
 
             var schema = new EventStore.StreamSchema {
-                PartitionColumnName = "id",
-                PartitionValue = "aggregate-head-1"
+                StreamHeadDocID = "STREAM-HEAD-ID-123",
+                PartitionColumnName = "city",
+                PartitionValue = "Zoetermeer"
             };
 
             projectEventStore.EmitEvents(schema, new List <EisenAdded> {
                 new EisenAdded
                 {
+                    City = "Zoetermeer",
                     EventDescription = "Event1" + DateTime.UtcNow.Ticks.ToString()
                 },
                 new EisenAdded
                 {
-                 
+                    City = "Zoetermeer",
                     EventDescription = "Event3" + DateTime.UtcNow.Ticks.ToString()
                 }
             }).Wait();
@@ -53,7 +62,7 @@ namespace Ibis.Fst.Storage
         private static void Sample1()
         {
             var tenantStore = DocumentStoreFactory.CreateAsync<TenantStore>
-                            (Constants.Databases.TenantDatastore, Constants.Collections.TenantCollection).Result;
+                            (Constants.Databases.TenantCatalogDb, Constants.Collections.TenantCatalog).Result;
 
             var payload = new Tenant
             {
